@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -18,8 +17,8 @@ const formSchema = z.object({
   startDate: z.date().optional().nullable(),
   lastUpdatedDate: z.date().optional().nullable(),
 }).catchall(z.any());
-type ProductFormValues = z.infer<typeof formSchema>;
 
+type ProductFormValues = z.infer<typeof formSchema>;
 
 export default function NewProductPage() {
   const { addProduct } = useProducts();
@@ -29,40 +28,49 @@ export default function NewProductPage() {
 
   const handleSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
-    
-    const { id: toastId } = toast({
-      title: 'Adding Product...',
-      description: `${data.name} is being added to the store.`,
-    });
 
     try {
-      await addProduct(data);
+      // 🔄 loading toast
       toast({
-        id: toastId,
+        title: 'Adding Product...',
+        description: `${data.name} is being added to the store.`,
+      });
+
+      await addProduct(data);
+
+      // ✅ success toast
+      toast({
         title: 'Product Added',
         description: `${data.name} has been successfully added.`,
       });
+
       router.push('/admin/dashboard');
     } catch (error: any) {
-        toast({
-          id: toastId,
-          title: "Error adding product",
-          description: error.message,
-          variant: 'destructive',
-        });
+      console.error(error);
+
+      // ❌ error toast
+      toast({
+        title: 'Error adding product',
+        description: error?.message || 'Something went wrong',
+        variant: 'destructive',
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto">
-       <Card>
+      <Card>
         <CardHeader>
           <CardTitle>Add New Product</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProductForm onSubmit={handleSubmit} initialData={null} isSubmitting={isSubmitting} />
+          <ProductForm
+            onSubmit={handleSubmit}
+            initialData={null}
+            isSubmitting={isSubmitting}
+          />
         </CardContent>
       </Card>
     </div>
