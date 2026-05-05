@@ -1,33 +1,26 @@
 import admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
 
-// ✅ Load service account
-const filePath = path.join(process.cwd(), "serviceAccount.json");
-
-let serviceAccount: admin.ServiceAccount;
-
-try {
-  const file = fs.readFileSync(filePath, "utf8");
-  serviceAccount = JSON.parse(file);
-  console.log("✅ Service account loaded");
-} catch (err) {
-  console.error("❌ Failed to load service account:", err);
-}
-
-// ✅ Initialize Firebase safely
+// Prevent re-initialization in Next.js (important)
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        // Fix for multiline private key
+        privateKey: process.env.FIREBASE_PRIVATE_KEY
+          ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+          : undefined,
+      }),
     });
-    console.log("✅ Firebase initialized");
+
+    console.log("✅ Firebase Admin initialized");
   } catch (error) {
     console.error("❌ Firebase init error:", error);
   }
 }
 
-// ✅ Always export AFTER init
+// Export services
 const adminDb = admin.firestore();
 const adminAuth = admin.auth();
 
