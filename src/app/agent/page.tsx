@@ -1,112 +1,200 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from 'react';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export default function AgentPage() {
-  const [response, setResponse] = useState<any>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const [message, setMessage] = useState('');
+
   const [loading, setLoading] = useState(false);
 
-  const [masterId, setMasterId] = useState("");
-  const [transactionId, setTransactionId] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const runAnalysis = async () => {
-    if (!masterId || !transactionId) {
-      alert("Enter both Master ID and Transaction ID");
-      return;
-    }
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+
+    const userMessage: Message = {
+      role: 'user',
+      content: message,
+    };
+
+    const updatedMessages = [
+      ...messages,
+      userMessage,
+    ];
+
+    setMessages(updatedMessages);
+
+    setMessage('');
+
+    setLoading(true);
 
     try {
-      setLoading(true);
-
-      const res = await fetch("/api/agent", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          masterId,
-          transactionId,
+          message,
+          history: messages,
         }),
       });
 
-      const data = await res.json();
-      setResponse(data);
+      const data = await response.json();
+
+      const aiMessage: Message = {
+        role: 'assistant',
+        content: data.response,
+      };
+
+      setMessages([
+        ...updatedMessages,
+        aiMessage,
+      ]);
 
     } catch (error) {
-      console.error("FRONTEND ERROR:", error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Agent Analysis</h1>
+    <div className="min-h-screen bg-black text-white flex flex-col">
 
-      {/* INPUTS */}
-      <div style={{ marginBottom: "10px" }}>
-        <input
-          type="text"
-          placeholder="Master Quote ID (M1)"
-          value={masterId}
-          onChange={(e) => setMasterId(e.target.value)}
-        />
+      <div className="border-b border-zinc-800 p-6">
 
-        <input
-          type="text"
-          placeholder="Transaction Quote ID (T1)"
-          value={transactionId}
-          onChange={(e) => setTransactionId(e.target.value)}
-        />
+        <h1 className="text-3xl font-bold">
+          ShopStream AI Procurement Assistant
+        </h1>
+
+        <p className="text-zinc-400 mt-2">
+          Conversational AI powered by Firebase + Gemini
+        </p>
+
       </div>
 
-      {/* BUTTON */}
-      <button onClick={runAnalysis} disabled={loading}>
-        {loading ? "Running..." : "Run Analysis"}
-      </button>
+      <div className="flex-1 overflow-y-auto p-6">
 
-      {/* TABLE */}
-      {response?.table?.length > 0 && (
-        <table border={1} cellPadding={10}>
-          <thead>
-            <tr>
-              {Object.keys(response.table[0]).map((key) => (
-                <th key={key}>{key}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {response.table.map((row: any, i: number) => (
-              <tr key={i}>
-                {Object.values(row).map((val: any, j: number) => (
-                  <td key={j}>
-                    {val === "Included" ? "Included 🔥" : val}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <div className="max-w-4xl mx-auto space-y-4">
 
-      {/* SUMMARY */}
-      {response?.summary && (
-        <p>
-          <b>Summary:</b> {response.summary}
-        </p>
-      )}
+          {messages.length === 0 && (
+            <div className="text-zinc-500 text-center mt-20">
 
-      {/* AI OUTPUT */}
-      {response?.aiSummary && (
-        <pre>{response.aiSummary}</pre>
-      )}
+              <h2 className="text-2xl mb-4">
+                Ask procurement questions naturally
+              </h2>
 
-      {/* BEST VENDOR */}
-      {response?.overallBestVendor && (
-        <p>
-          <b>Overall Best Vendor:</b> {response.overallBestVendor}
-        </p>
-      )}
+              <div className="space-y-2">
+
+                <p>
+                  Which vendor gives cheapest laptops?
+                </p>
+
+                <p>
+                  Compare top suppliers for monitors
+                </p>
+
+                <p>
+                  Show pending orders
+                </p>
+
+                <p>
+                  Which quote is best under 5 lakh?
+                </p>
+
+              </div>
+
+            </div>
+          )}
+
+          {messages.map((msg, index) => (
+
+            <div
+              key={index}
+              className={`flex ${
+                msg.role === 'user'
+                  ? 'justify-end'
+                  : 'justify-start'
+              }`}
+            >
+
+              <div
+                className={`max-w-[80%] rounded-2xl p-4 whitespace-pre-wrap ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600'
+                    : 'bg-zinc-800'
+                }`}
+              >
+                {msg.content}
+              </div>
+
+            </div>
+
+          ))}
+
+          {loading && (
+
+            <div className="flex justify-start">
+
+              <div className="bg-zinc-800 rounded-2xl p-4">
+
+                Thinking...
+
+              </div>
+
+            </div>
+
+          )}
+
+          <div ref={bottomRef} />
+
+        </div>
+
+      </div>
+
+      <div className="border-t border-zinc-800 p-4">
+
+        <div className="max-w-4xl mx-auto flex gap-4">
+
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Ask ShopStream AI..."
+            className="flex-1 bg-zinc-900 rounded-2xl p-4 outline-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSend();
+              }
+            }}
+          />
+
+          <button
+            onClick={handleSend}
+            disabled={loading}
+            className="bg-blue-600 px-8 rounded-2xl"
+          >
+            Send
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
   );
 }

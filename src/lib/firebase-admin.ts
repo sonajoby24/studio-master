@@ -1,27 +1,22 @@
 import admin from "firebase-admin";
+import dotenv from "dotenv";
 
-// Prevent re-initialization in Next.js (important)
+dotenv.config({ path: ".env.local" });
+
+const serviceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+};
+
 if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Fix for multiline private key
-        privateKey: process.env.FIREBASE_PRIVATE_KEY
-          ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-          : undefined,
-      }),
-    });
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
 
-    console.log("✅ Firebase Admin initialized");
-  } catch (error) {
-    console.error("❌ Firebase init error:", error);
-  }
+  console.log("✅ Firebase Admin initialized");
 }
 
-// Export services
 const adminDb = admin.firestore();
-const adminAuth = admin.auth();
 
-export { adminDb, adminAuth };
+export { adminDb };

@@ -1,184 +1,184 @@
+
 "use client";
 
 import { useState } from "react";
 
-// ✅ CHART IMPORTS
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
-// ✅ REGISTER CHART
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+export default function Home() {
 
-export default function AgentPage() {
-  const [masterId, setMasterId] = useState("M1");
-  const [transactionId, setTransactionId] = useState("T1");
-  const [response, setResponse] = useState<any>(null);
+  const [message, setMessage] = useState("");
+
+  const [messages, setMessages] = useState<Message[]>([]);
+
   const [loading, setLoading] = useState(false);
 
-  // ✅ RUN ANALYSIS
-  const runAnalysis = async () => {
+  async function sendMessage() {
+
+    if (!message.trim()) return;
+
     setLoading(true);
 
     try {
-      const res = await fetch("/api/agent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ masterId, transactionId }),
-      });
 
-      const data = await res.json();
-      setResponse(data);
+      const response = await fetch(
+        "/api/chat",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            message,
+            history: messages,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      setMessages((prev) => [
+        ...prev,
+
+        {
+          role: "user",
+          content: message,
+        },
+
+        {
+          role: "assistant",
+          content: data.response,
+        },
+      ]);
+
+      setMessage("");
 
     } catch (error) {
-      console.error("Error:", error);
-      alert("Something went wrong!");
+
+      console.error(error);
+
+    } finally {
+
+      setLoading(false);
+
     }
-
-    setLoading(false);
-  };
-
-  // ✅ SEED DATA
-  const seedData = async () => {
-    try {
-      await fetch("/api/seed");
-      alert("✅ Data inserted!");
-    } catch {
-      alert("❌ Seed failed");
-    }
-  };
-
-  // ✅ CHART DATA (INSIDE COMPONENT)
-  const chartData = response?.reduced
-    ? {
-        labels: response.reduced.map((r: any) => r.vendor),
-        datasets: [
-          {
-            label: "Score",
-            data: response.reduced.map((r: any) => r.score),
-          },
-          {
-            label: "Risk",
-            data: response.reduced.map((r: any) => r.risk),
-          },
-        ],
-      }
-    : null;
+  }
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <h1>Agent Analysis Dashboard</h1>
 
-      {/* SEED */}
-      <button onClick={seedData}>Seed Data</button>
+    <div className="min-h-screen bg-black text-white p-8">
 
-      <br /><br />
+      <div className="max-w-4xl mx-auto">
 
-      {/* INPUTS */}
-      <input
-        value={masterId}
-        onChange={(e) => setMasterId(e.target.value)}
-        placeholder="Master ID"
-        style={{ marginRight: 10 }}
-      />
+        <h1 className="text-5xl font-bold mb-4">
+          ShopStream Enterprise AI
+        </h1>
 
-      <input
-        value={transactionId}
-        onChange={(e) => setTransactionId(e.target.value)}
-        placeholder="Transaction ID"
-      />
+        <p className="text-zinc-400 mb-8">
+          Conversational Procurement Assistant 
+        </p>
 
-      <br /><br />
+        {/* CHAT */}
 
-      {/* RUN */}
-      <button onClick={runAnalysis}>
-        {loading ? "Running..." : "Run Analysis"}
-      </button>
+        <div className="space-y-6 mb-8">
 
-      {/* OUTPUT */}
-      {response && (
-        <div style={{ marginTop: 20 }}>
+          {messages.length === 0 && (
 
-          {/* TABLE */}
-          <h3>📊 Product vs Vendor Table</h3>
-          <table border={1} cellPadding={8}>
-            <thead>
-              <tr>
-                <th>Product</th>
-                {Object.keys(response.table[0] || {})
-                  .filter((k) => k !== "product")
-                  .map((vendor: string) => (
-                    <th key={vendor}>{vendor}</th>
-                  ))}
-              </tr>
-            </thead>
-            <tbody>
-              {response.table.map((row: any, i: number) => (
-                <tr key={i}>
-                  <td>{row.product}</td>
-                  {Object.keys(row)
-                    .filter((k) => k !== "product")
-                    .map((vendor: string) => (
-                      <td key={vendor}>{row[vendor]}</td>
-                    ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <div className="text-zinc-500 space-y-3 mb-10">
 
-          <br />
+              <p>
+                Which vendor gives cheapest laptops?
+              </p>
 
-          {/* METRICS */}
-          <h3>📦 Vendor Metrics</h3>
-          <pre>{JSON.stringify(response.metrics, null, 2)}</pre>
+              <p>
+                Compare top monitor suppliers
+              </p>
 
-          {/* REDUCED */}
-          <h3>📉 Score & Risk</h3>
-          <pre>{JSON.stringify(response.reduced, null, 2)}</pre>
+              <p>
+                Show pending procurement orders
+              </p>
 
-          {/* ✅ CHART (CORRECT PLACE) */}
-          {chartData && (
-            <>
-              <h3>📊 Score vs Risk Chart</h3>
-              <Bar data={chartData} />
-            </>
+              <p>
+                Which quote is best under 5 lakh?
+              </p>
+
+            </div>
+
           )}
 
-          {/* RESULT */}
-          <h3>✅ Result</h3>
-          <p><b>Best Vendor:</b> {response.bestVendor}</p>
-          <p><b>Overall Best:</b> {response.overallBestVendor}</p>
+          {messages.map((msg, index) => (
 
-          {/* AI */}
-          <h3>🤖 AI Recommendation</h3>
-          <div
-            style={{
-              padding: "10px",
-              background: "#e6f0ff",
-              borderRadius: "8px",
-            }}
-          >
-            {response.recommendation}
-          </div>
+            <div
+              key={index}
+              className={
+                msg.role === "user"
+                  ? "bg-blue-700 p-5 rounded-2xl ml-20"
+                  : "bg-slate-800 p-5 rounded-2xl mr-20 whitespace-pre-wrap"
+              }
+            >
+
+              <h2 className="font-bold text-xl mb-2">
+
+                {msg.role === "user"
+                  ? "You"
+                  : "ShopStream AI"}
+
+              </h2>
+
+              <p>{msg.content}</p>
+
+            </div>
+
+          ))}
+
+          {loading && (
+
+            <div className="bg-slate-800 p-5 rounded-2xl mr-20">
+
+              Thinking...
+
+            </div>
+
+          )}
 
         </div>
-      )}
+
+        {/* INPUT */}
+
+        <div className="bg-slate-900 p-4 rounded-2xl flex gap-4">
+
+          <textarea
+            value={message}
+            onChange={(e) =>
+              setMessage(e.target.value)
+            }
+            placeholder="Ask procurement questions..."
+            className="flex-1 h-24 rounded-xl p-4 text-black"
+          />
+
+          <button
+            onClick={sendMessage}
+            disabled={loading}
+            className="bg-blue-600 px-6 py-3 rounded-xl h-fit"
+          >
+
+            {loading
+              ? "Thinking..."
+              : "Send"}
+
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
+
   );
 }

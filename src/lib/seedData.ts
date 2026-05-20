@@ -23,12 +23,14 @@ export async function seedFirestore() {
     await adminDb.collection("transactionQuotes").doc("T1").set({
       transactionId: "T1",
       masterQuoteId: "M1",
+
       vendors: [
         {
-          vendor: "vendor A",
+          vendor: "Vendor A",
           rating: 4.5,
           deliveryDays: 2,
           expectedDate: "2026-05-04",
+
           products: [
             { name: "Brake Pad", price: 1100 },
             { name: "Engine Oil", price: 2500 },
@@ -40,11 +42,13 @@ export async function seedFirestore() {
             { name: "Battery", price: 4500 },
           ],
         },
+
         {
-          vendor: "vendor B",
+          vendor: "Vendor B",
           rating: 4.2,
           deliveryDays: 4,
           expectedDate: "2026-05-01",
+
           products: [
             { name: "Brake Pad", price: 1000 },
             { name: "Engine Oil", price: 2600 },
@@ -56,11 +60,13 @@ export async function seedFirestore() {
             { name: "Battery", price: 4300 },
           ],
         },
+
         {
-          vendor: "vendor C",
+          vendor: "Vendor C",
           rating: 3.5,
           deliveryDays: 3,
           expectedDate: "2026-05-01",
+
           products: [
             { name: "Brake Pad", price: 1150 },
             { name: "Engine Oil", price: 2400 },
@@ -75,9 +81,32 @@ export async function seedFirestore() {
       ],
     });
 
-    console.log("✅ Data inserted");
+    /* ================= SIMPLE VENDORS ================= */
+    await adminDb.collection("vendors").add({
+      name: "Vendor A",
+      rating: 4.5,
+      deliveryDays: 2,
+      totalPrice: 12600,
+    });
+
+    await adminDb.collection("vendors").add({
+      name: "Vendor B",
+      rating: 4.2,
+      deliveryDays: 4,
+      totalPrice: 12570,
+    });
+
+    await adminDb.collection("vendors").add({
+      name: "Vendor C",
+      rating: 3.5,
+      deliveryDays: 3,
+      totalPrice: 12530,
+    });
+
+    console.log("✅ Data inserted successfully");
   } catch (err) {
     console.error("❌ Seed error:", err);
-    throw err;
   }
 }
+
+seedFirestore();
