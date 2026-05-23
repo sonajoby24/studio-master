@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from "@/lib/firebase-admin";
 
 export async function retrieveRelevantData(
   query: string
@@ -9,39 +9,17 @@ export async function retrieveRelevantData(
 
   let data: any = {};
 
-  // VENDORS
+  /* ================= PRODUCTS ================= */
 
   if (
-    lowerQuery.includes('vendor') ||
-    lowerQuery.includes('supplier') ||
-    lowerQuery.includes('cheapest') ||
-    lowerQuery.includes('best')
+    lowerQuery.includes("product") ||
+    lowerQuery.includes("products") ||
+    lowerQuery.includes("item")
   ) {
 
     const snapshot =
       await adminDb
-        .collection('vendors')
-        .get();
-
-    data.vendors =
-      snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-  }
-
-  // PRODUCTS
-
-  if (
-    lowerQuery.includes('product') ||
-    lowerQuery.includes('laptop') ||
-    lowerQuery.includes('monitor') ||
-    lowerQuery.includes('item')
-  ) {
-
-    const snapshot =
-      await adminDb
-        .collection('products')
+        .collection("products")
         .get();
 
     data.products =
@@ -51,18 +29,17 @@ export async function retrieveRelevantData(
       }));
   }
 
-  // QUOTES
+  /* ================= QUOTES ================= */
 
   if (
-    lowerQuery.includes('quote') ||
-    lowerQuery.includes('pricing') ||
-    lowerQuery.includes('price') ||
-    lowerQuery.includes('cost')
+    lowerQuery.includes("quote") ||
+    lowerQuery.includes("quotes") ||
+    lowerQuery.includes("price")
   ) {
 
     const snapshot =
       await adminDb
-        .collection('quotes')
+        .collection("quotes")
         .get();
 
     data.quotes =
@@ -72,7 +49,44 @@ export async function retrieveRelevantData(
       }));
   }
 
-  // DEFAULT FALLBACK
+  /* ================= VENDOR ================= */
+
+  if (
+    lowerQuery.includes("vendor") ||
+    lowerQuery.includes("supplier")
+  ) {
+
+    const snapshot =
+      await adminDb
+        .collection("vendor")
+        .get();
+
+    data.vendor =
+      snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+  }
+
+  /* ================= ORDERS ================= */
+
+  if (
+    lowerQuery.includes("order")
+  ) {
+
+    const snapshot =
+      await adminDb
+        .collection("orders")
+        .get();
+
+    data.orders =
+      snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+  }
+
+  /* ================= DEFAULT ================= */
 
   if (
     Object.keys(data).length === 0
@@ -80,16 +94,19 @@ export async function retrieveRelevantData(
 
     const snapshot =
       await adminDb
-        .collection('vendors')
+        .collection("products")
         .get();
 
-    data.vendors =
+    data.products =
       snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
   }
 
-  return data;
+  return JSON.stringify(
+    data,
+    null,
+    2
+  );
 }
-

@@ -1,21 +1,17 @@
+import OpenAI from "openai";
 
-import OpenAI from 'openai';
+import { SYSTEM_PROMPT } from "./prompts";
 
-import { SYSTEM_PROMPT } from './prompts';
-
-import { retrieveRelevantData } from './retrieval';
+import { retrieveRelevantData } from "./retrieval";
 
 import {
   ChatMessage,
   formatConversationHistory,
-} from './memory';
+} from "./memory";
 
 const client = new OpenAI({
-
-  baseURL: 'https://openrouter.ai/api/v1',
-
+  baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY,
-
 });
 
 export async function runAgent(
@@ -34,18 +30,17 @@ export async function runAgent(
     const completion =
       await client.chat.completions.create({
 
-        model:
-          'openai/gpt-3.5-turbo',
+        model: "openai/gpt-3.5-turbo",
 
         messages: [
 
           {
-            role: 'system',
+            role: "system",
             content: SYSTEM_PROMPT,
           },
 
           {
-            role: 'user',
+            role: "user",
             content: `
 DATABASE:
 ${JSON.stringify(databaseData, null, 2)}
@@ -67,25 +62,13 @@ Answer ONLY using database data.
     return (
       completion.choices[0]
         ?.message?.content ||
-
-      'No response generated.'
+      "No response generated."
     );
 
   } catch (error) {
 
     console.error(error);
 
-    const databaseData =
-      await retrieveRelevantData(userMessage);
-
-    return `
-AI provider temporarily unavailable.
-
-Retrieved Firebase Data:
-
-${JSON.stringify(databaseData, null, 2)}
-`;
-
+    return "AI agent failed";
   }
 }
-

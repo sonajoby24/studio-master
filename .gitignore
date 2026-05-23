@@ -48,3 +48,7 @@ serviceAccount.json
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+node_modules
+.next
+.env.local

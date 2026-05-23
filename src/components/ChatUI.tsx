@@ -8,21 +8,29 @@ interface Message {
 }
 
 export default function ChatUI() {
-  const [messages, setMessages] = useState<Message[]>([]);
 
-  const [input, setInput] = useState("");
+  const [messages, setMessages] =
+    useState<Message[]>([]);
 
-  const [loading, setLoading] = useState(false);
+  const [input, setInput] =
+    useState("");
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] =
+    useState(false);
+
+  const bottomRef =
+    useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
+
   }, [messages]);
 
   async function sendMessage() {
+
     if (!input.trim()) return;
 
     const userMessage: Message = {
@@ -42,65 +50,123 @@ export default function ChatUI() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: input,
-          history: messages,
-        }),
-      });
 
-      const data = await response.json();
+      const response =
+        await fetch("/api/chat", {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            message: input,
+            history: messages,
+          }),
+
+        });
+
+      const data =
+        await response.json();
+
+      const safeContent =
+        typeof data.response ===
+        "object"
+
+          ? JSON.stringify(
+              data.response,
+              null,
+              2
+            )
+
+          : String(
+              data.response
+            );
 
       setMessages([
         ...updatedMessages,
         {
           role: "assistant",
-          content: data.response,
+          content: safeContent,
         },
       ]);
+
     } catch (error) {
+
       console.error(error);
+
+      setMessages([
+        ...updatedMessages,
+        {
+          role: "assistant",
+          content:
+            "Something went wrong.",
+        },
+      ]);
+
     } finally {
+
       setLoading(false);
+
     }
   }
 
   return (
+
     <div className="flex flex-col h-screen bg-black text-white">
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
         {messages.map((msg, index) => (
+
           <div
             key={index}
-            className={`max-w-3xl p-4 rounded-xl whitespace-pre-wrap ${
+            className={`max-w-5xl p-4 rounded-xl whitespace-pre-wrap overflow-x-auto ${
               msg.role === "user"
                 ? "bg-blue-600 ml-auto"
-                : "bg-zinc-800"
+                : "bg-zinc-900"
             }`}
           >
+
             {msg.content}
+
           </div>
+
         ))}
 
         {loading && (
+
           <div className="bg-zinc-800 p-4 rounded-xl w-fit">
+
             Thinking...
+
           </div>
+
         )}
 
         <div ref={bottomRef} />
+
       </div>
 
       <div className="border-t border-zinc-800 p-4 flex gap-2">
+
         <input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) =>
+            setInput(
+              e.target.value
+            )
+          }
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+
+            if (
+              e.key === "Enter"
+            ) {
+
               sendMessage();
+
             }
           }}
           placeholder="Ask procurement questions..."
@@ -113,7 +179,9 @@ export default function ChatUI() {
         >
           Send
         </button>
+
       </div>
+
     </div>
   );
 }
