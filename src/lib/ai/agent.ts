@@ -18,19 +18,31 @@ export async function runAgent(
   userMessage: string,
   history: ChatMessage[]
 ) {
-
   try {
-
-    const databaseData =
+    let databaseData =
       await retrieveRelevantData(userMessage);
 
     const conversationHistory =
       formatConversationHistory(history);
 
+    const databaseString =
+      JSON.stringify(
+        databaseData,
+        null,
+        2
+      );
+
+    console.log(
+      "DATABASE SENT TO AI:",
+      databaseString
+    );
+
     const completion =
       await client.chat.completions.create({
 
         model: "openai/gpt-3.5-turbo",
+
+        max_tokens: 300,
 
         messages: [
 
@@ -43,7 +55,7 @@ export async function runAgent(
             role: "user",
             content: `
 DATABASE:
-${JSON.stringify(databaseData, null, 2)}
+${databaseString}
 
 CHAT HISTORY:
 ${conversationHistory}
@@ -65,10 +77,24 @@ Answer ONLY using database data.
       "No response generated."
     );
 
-  } catch (error) {
+  } catch (error: any) {
 
     console.error(error);
 
-    return "AI agent failed";
+    if (error?.status === 402) {
+
+      return `
+AI service quota exceeded.
+
+The Firebase data is available and working correctly.
+
+The AI provider (OpenRouter) rejected the request due to token/credit limits.
+
+Please try again later or reduce the amount of data being queried.
+`;
+
+    }
+
+    return "AI agent failed.";
   }
 }

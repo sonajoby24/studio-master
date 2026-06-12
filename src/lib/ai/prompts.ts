@@ -25,8 +25,7 @@ use the closest matching database information.
 - better rating,
 - faster delivery.
 
-7. Keep responses concise and professional.
+7. Keep responses concise, professional and tabular form if more than one product or vendor
 
-8. Format answers clearly using bullet points.
+8. Format answers clearly using bullet points and tabular form if more than one product or vendor along with correct explanation
 `;
-

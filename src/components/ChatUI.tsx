@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import ProcurementDashboard from "./ProcurementDashboard";
 
 interface Message {
   role: "user" | "assistant";
-  content: string;
+  content?: string;
+  type?: "text" | "report";
+  reportData?: any;
 }
 
 export default function ChatUI() {
-
   const [messages, setMessages] =
     useState<Message[]>([]);
 
@@ -22,15 +25,12 @@ export default function ChatUI() {
     useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-
   }, [messages]);
 
   async function sendMessage() {
-
     if (!input.trim()) return;
 
     const userMessage: Message = {
@@ -50,23 +50,94 @@ export default function ChatUI() {
     setLoading(true);
 
     try {
+      const quoteMatch =
+        input.match(/0Q0[a-zA-Z0-9]+/);
+
+      const wantsReport =
+        input
+          .toLowerCase()
+          .includes("generate report");
+
+      if (
+        wantsReport &&
+        quoteMatch
+      ) {
+        const quoteId =
+          quoteMatch[0];
+
+        const reportResponse =
+          await fetch(
+            "/api/report",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                quoteId,
+              }),
+            }
+          );
+
+        const reportData =
+          await reportResponse.json();
+
+        if (
+          reportData.success
+        ) {
+          setMessages([
+            ...updatedMessages,
+            {
+              role: "assistant",
+              type: "report",
+              reportData:
+                reportData.report,
+              content: `
+# Report Generated
+
+Quote ID: ${quoteId}
+
+✅ Total Products: ${reportData.report.totalProducts}
+
+✅ Total Amount: $${reportData.report.totalAmount}
+
+Dashboard Updated Successfully.
+              `,
+            },
+          ]);
+
+          return;
+        }
+
+        setMessages([
+          ...updatedMessages,
+          {
+            role: "assistant",
+            content:
+              reportData.message ||
+              "Quote not found.",
+          },
+        ]);
+
+        return;
+      }
 
       const response =
-        await fetch("/api/chat", {
-
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            message: input,
-            history: messages,
-          }),
-
-        });
+        await fetch(
+          "/api/chat",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              message: input,
+              history: messages,
+            }),
+          }
+        );
 
       const data =
         await response.json();
@@ -74,13 +145,11 @@ export default function ChatUI() {
       const safeContent =
         typeof data.response ===
         "object"
-
           ? JSON.stringify(
               data.response,
               null,
               2
             )
-
           : String(
               data.response
             );
@@ -89,12 +158,11 @@ export default function ChatUI() {
         ...updatedMessages,
         {
           role: "assistant",
-          content: safeContent,
+          content:
+            safeContent,
         },
       ]);
-
     } catch (error) {
-
       console.error(error);
 
       setMessages([
@@ -105,49 +173,56 @@ export default function ChatUI() {
             "Something went wrong.",
         },
       ]);
-
     } finally {
-
       setLoading(false);
-
     }
   }
 
   return (
-
     <div className="flex flex-col h-screen bg-black text-white">
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-        {messages.map((msg, index) => (
+        {messages.map(
+          (
+            msg,
+            index
+          ) => (
+            <div
+              key={index}
+              className={`${
+                msg.role ===
+                "user"
+                  ? "bg-blue-600 ml-auto max-w-5xl p-4 rounded-xl"
+                  : "bg-zinc-900 p-4 rounded-xl"
+              }`}
+            >
+              <ReactMarkdown>
+                {msg.content || ""}
+              </ReactMarkdown>
 
-          <div
-            key={index}
-            className={`max-w-5xl p-4 rounded-xl whitespace-pre-wrap overflow-x-auto ${
-              msg.role === "user"
-                ? "bg-blue-600 ml-auto"
-                : "bg-zinc-900"
-            }`}
-          >
-
-            {msg.content}
-
-          </div>
-
-        ))}
+              {msg.type ===
+                "report" &&
+                msg.reportData && (
+                  <div className="mt-6">
+                    <ProcurementDashboard
+                      reportData={
+                        msg.reportData
+                      }
+                    />
+                  </div>
+                )}
+            </div>
+          )
+        )}
 
         {loading && (
-
           <div className="bg-zinc-800 p-4 rounded-xl w-fit">
-
             Thinking...
-
           </div>
-
         )}
 
         <div ref={bottomRef} />
-
       </div>
 
       <div className="border-t border-zinc-800 p-4 flex gap-2">
@@ -160,13 +235,11 @@ export default function ChatUI() {
             )
           }
           onKeyDown={(e) => {
-
             if (
-              e.key === "Enter"
+              e.key ===
+              "Enter"
             ) {
-
               sendMessage();
-
             }
           }}
           placeholder="Ask procurement questions..."
@@ -174,10 +247,17 @@ export default function ChatUI() {
         />
 
         <button
-          onClick={sendMessage}
+          onClick={
+            sendMessage
+          }
+          disabled={
+            loading
+          }
           className="bg-blue-600 px-5 rounded-xl"
         >
-          Send
+          {loading
+            ? "Thinking..."
+            : "Send"}
         </button>
 
       </div>
