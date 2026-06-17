@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     let quoteData: any = null;
 
-    quoteSnapshot.forEach((doc) => {
+    for (const doc of quoteSnapshot.docs) {
       const data = doc.data();
 
       const parentQuoteId =
@@ -28,9 +28,12 @@ export async function POST(req: Request) {
         parentQuoteId === quoteId ||
         actualQuoteId === quoteId
       ) {
+        console.log("MATCH FOUND:", doc.id);
+
         quoteData = data;
+        break;
       }
-    });
+    }
 
     if (!quoteData) {
       return NextResponse.json({
@@ -44,6 +47,15 @@ export async function POST(req: Request) {
 
     const lines =
       quoteInfo?.Qlines || [];
+
+    console.log(
+      "QUOTE FOUND:",
+      JSON.stringify(
+        quoteInfo,
+        null,
+        2
+      )
+    );
 
     // -------------------------------
     // Load RFQ Data
@@ -59,27 +71,84 @@ export async function POST(req: Request) {
       rfqItems.push(doc.data());
     });
 
+    const missingProducts =
+      rfqItems.filter((rfq) => {
+
+    return !lines.some(
+      (line: any) => {
+
+        return (
+          line.ProductName === rfq.productName &&
+          (line.SpecValue || "") ===
+          (rfq.SpecValue || "")
+        );
+
+      }
+    );
+
+  });
+    
+    const extraProducts =
+  lines.filter((line: any) => {
+
+    return !rfqItems.some(
+      (rfq) => {
+
+        return (
+          rfq.productName ===
+          line.ProductName &&
+
+          (rfq.SpecValue || "") ===
+          (line.SpecValue || "")
+        );
+
+      }
+    );
+
+  });
+
     // -------------------------------
     // Build Analysis Rows
     // -------------------------------
 
-    const analysisProducts =
-      lines.map((item: any) => {
+    const analysisProducts = lines.map(
+      (item: any) => {
+       const rfqMatch =
+        rfqItems.find((rfq) => {
 
-        const rfqMatch =
-          rfqItems.find(
-            (rfq) =>
-              rfq.productName
-                ?.toLowerCase()
-                .trim() ===
-              item.ProductName
-                ?.toLowerCase()
-                .trim()
-          ) || null;
+    const rfqProduct =
+      (rfq.productName || "")
+        .toLowerCase()
+        .trim();
 
+    const quoteProduct =
+      (item.ProductName || "")
+        .toLowerCase()
+        .trim();
+
+    return (
+      rfqProduct === quoteProduct &&
+      (rfq.SpecValue || "")
+        .toLowerCase()
+        .trim() ===
+      (item.SpecValue || "")
+        .toLowerCase()
+        .trim()
+    );
+
+  }) || null;
+
+const specMatched =
+  ((rfqMatch?.SpecValue || "")
+    .toLowerCase()
+    .trim()) ===
+  ((item.SpecValue || "")
+    .toLowerCase()
+    .trim());
         const requestedQty =
           Number(
-            rfqMatch?.requestedQty || 0
+            rfqMatch?.requestedQty ||
+              0
           );
 
         const addressedQty =
@@ -89,7 +158,8 @@ export async function POST(req: Request) {
 
         const targetPrice =
           Number(
-            rfqMatch?.targetPrice || 0
+            rfqMatch?.targetPrice ||
+              0
           );
 
         const vendorPrice =
@@ -130,9 +200,19 @@ export async function POST(req: Request) {
             "Not Recommended";
         }
 
-        return {
-          productName:
-            item.ProductName,
+       return {
+         productName:
+           `${item.ProductName} (${item.SpecValue || "NA"})`,
+          
+          specMatched,
+
+          specStatus:
+            specMatched
+              ? "Specification Match"
+              : "Wrong Specification",
+
+          specValue:
+            item.SpecValue || "",
 
           requestedQty,
 
@@ -151,7 +231,8 @@ export async function POST(req: Request) {
               ? "Qty Match"
               : "Qty Mismatch",
         };
-      });
+      }
+    );
 
     // -------------------------------
     // Summary Metrics
@@ -161,10 +242,17 @@ export async function POST(req: Request) {
 
     lines.forEach((item: any) => {
       totalAmount +=
-        Number(item.UnitPrice || 0) *
-        Number(item.Quantity || 0);
+        Number(
+          item.UnitPrice || 0
+        ) *
+        Number(
+          item.Quantity || 0
+        );
     });
-    totalAmount = Number(totalAmount.toFixed(2));
+
+    totalAmount = Number(
+      totalAmount.toFixed(2)
+    );
 
     const qtyMatchedCount =
       analysisProducts.filter(
@@ -198,67 +286,83 @@ export async function POST(req: Request) {
           )
         : 0;
 
-    // -------------------------------
-    // AI Insights
-    // -------------------------------
-
     const insights = [
       `${qtyMatchedCount} of ${analysisProducts.length} products matched requested quantity.`,
       `${priceMatchedCount} of ${analysisProducts.length} products met target pricing.`,
       `Overall quantity compliance: ${qtyMatchPercentage}%`,
       `Overall pricing compliance: ${priceMatchPercentage}%`,
     ];
-    let recommendationSummary = "";
 
-if (
-  qtyMatchPercentage === 100 &&
-  priceMatchPercentage === 100
-) {
-  recommendationSummary =
-    "All products satisfy quantity and pricing requirements. This vendor quote is recommended for approval.";
-}
-else if (
-  qtyMatchPercentage >= 80 &&
-  priceMatchPercentage >= 80
-) {
-  recommendationSummary =
-    "Most products satisfy procurement requirements. Manual review is recommended before approval.";
-}
-else {
-  recommendationSummary =
-    "Multiple quantity or pricing mismatches were detected. This vendor quote is not recommended.";
-}
+    let recommendationSummary =
+      "";
+
+    if (
+      qtyMatchPercentage ===
+        100 &&
+      priceMatchPercentage ===
+        100
+    ) {
+      recommendationSummary =
+        "All products satisfy quantity and pricing requirements. This vendor quote is recommended for approval.";
+    } else if (
+      qtyMatchPercentage >=
+        80 &&
+      priceMatchPercentage >=
+        80
+    ) {
+      recommendationSummary =
+        "Most products satisfy procurement requirements. Manual review is recommended before approval.";
+    } else {
+      recommendationSummary =
+        "Multiple quantity or pricing mismatches were detected. This vendor quote is not recommended.";
+    }
+
     return NextResponse.json({
       success: true,
-
       report: {
-        inputQuoteId: quoteId,
+        inputQuoteId:
+          quoteId,
 
-      recommendationSummary,
-      
+        recommendationSummary,
+
         parentQuoteId:
-          quoteInfo?.ParentQuoteID || "",
+          quoteInfo?.ParentQuoteID ||
+          "",
 
         quoteId:
-          quoteInfo?.QuoteId || "",
+          quoteInfo?.QuoteId ||
+          "",
 
         quoteName:
-          quoteInfo?.QuoteName || "",
+          quoteInfo?.QuoteName ||
+          "",
 
         quoteNumber:
-          quoteInfo?.QuoteNumber || "",
+          quoteInfo?.QuoteNumber ||
+          "",
 
         quoteType:
-          quoteInfo?.QuoteType || "",
+          quoteInfo?.QuoteType ||
+          "",
 
         totalProducts:
           lines.length,
 
         totalAmount,
 
-        qtyMatchPercentage,
+         qtyMatchPercentage,
 
         priceMatchPercentage,
+
+         missingProductCount:
+           missingProducts.length,
+
+        extraProductCount:
+          extraProducts.length,
+
+        missingProducts,
+
+         extraProducts,
 
         insights,
 
@@ -267,7 +371,6 @@ else {
       },
     });
   } catch (error) {
-
     console.error(error);
 
     return NextResponse.json({

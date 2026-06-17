@@ -54,7 +54,7 @@ export default function ProcurementDashboard({
 
       {/* Summary Cards */}
 
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-7 gap-4">
 
         <div className="bg-slate-800 p-5 rounded-xl">
           <h3>Total Products</h3>
@@ -83,7 +83,32 @@ export default function ProcurementDashboard({
             {reportData.priceMatchPercentage}%
           </p>
         </div>
+        <div className="bg-red-700 p-5 rounded-xl">
+          <h3>Missing Products</h3>
+          <p className="text-3xl font-bold">
+            {reportData.missingProductCount || 0}
+          </p>
+        </div>
 
+         <div className="bg-orange-700 p-5 rounded-xl">
+           <h3>Extra Products</h3>
+           <p className="text-3xl font-bold">
+             {reportData.extraProductCount || 0}
+            </p>
+          </div>
+
+         <div className="bg-purple-700 p-5 rounded-xl">
+           <h3>Wrong Specs</h3>
+           <p className="text-3xl font-bold">
+    {
+      reportData.products?.filter(
+        (p: any) =>
+          p.specStatus ===
+          "Wrong Specification"
+      ).length
+    }
+  </p>
+</div>
       </div>
 
       {/* Product Distribution */}
@@ -178,6 +203,10 @@ export default function ProcurementDashboard({
               <th className="p-2 text-left">
                 Price Difference
               </th>
+              
+              <th className="p-2 text-left">
+                Specification Status
+              </th>
 
               <th className="p-2 text-left">
                 Remarks
@@ -227,6 +256,10 @@ export default function ProcurementDashboard({
                   <td className="p-2">
                     ${item.priceDifference}
                   </td>
+                  
+                  <td className="p-2">
+                    {item.specStatus}
+                  </td>
 
                   <td className="p-2">
                     {item.remarks}
@@ -262,6 +295,87 @@ export default function ProcurementDashboard({
         </table>
 
       </div>
+      
+
+      {/* Missing Products */}
+      
+      <div className="bg-slate-900 p-6 rounded-xl">
+
+        <h3 className="text-xl font-bold mb-4">
+          Missing Products
+        </h3>
+
+        {reportData.missingProducts?.length > 0 ? (
+
+    <ul>
+
+      {reportData.missingProducts.map(
+        (
+          item: any,
+          index: number
+        ) => (
+
+          <li key={index}>
+            ❌ {item.productName}
+            {" "}
+            (
+            {item.SpecValue || "NA"}
+            )
+          </li>
+
+        )
+      )}
+
+    </ul>
+
+  ) : (
+
+    <p>
+      No Missing Products
+    </p>
+
+  )}
+
+</div>
+
+<div className="bg-slate-900 p-6 rounded-xl">
+
+  <h3 className="text-xl font-bold mb-4">
+    Extra Products
+  </h3>
+
+  {reportData.extraProducts?.length > 0 ? (
+
+    <ul>
+
+      {reportData.extraProducts.map(
+        (
+          item: any,
+          index: number
+        ) => (
+
+          <li key={index}>
+            ⚠️ {item.ProductName}
+            {" "}
+            (
+            {item.SpecValue || "NA"}
+            )
+          </li>
+
+        )
+      )}
+
+    </ul>
+
+  ) : (
+
+    <p>
+      No Extra Products
+    </p>
+
+  )}
+
+</div>
 
       {/* AI Insights */}
 
