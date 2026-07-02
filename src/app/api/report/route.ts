@@ -111,10 +111,10 @@ export async function POST(req: Request) {
     // Build Analysis Rows
     // -------------------------------
 
-    const analysisProducts = lines.map(
+    const analysisProducts: any[] = lines.map(
       (item: any) => {
        const rfqMatch =
-        rfqItems.find((rfq) => {
+        rfqItems.find((rfq: any) => {
 
     const rfqProduct =
       (rfq.productName || "")
@@ -256,7 +256,7 @@ const specMatched =
 
     const qtyMatchedCount =
       analysisProducts.filter(
-        (p) =>
+        (p: any) =>
           p.requestedQty ===
           p.addressedQty
       ).length;
@@ -272,7 +272,7 @@ const specMatched =
 
     const priceMatchedCount =
       analysisProducts.filter(
-        (p) =>
+        (p: any) =>
           p.vendorPrice <=
           p.targetPrice
       ).length;
