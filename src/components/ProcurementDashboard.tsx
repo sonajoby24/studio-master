@@ -292,8 +292,8 @@ doc.text(
 
                 {chartData.map(
                   (
-                    entry,
-                    index
+                    entry: any,
+                    index: any
                   ) => (
                     <Cell
                       key={index}
