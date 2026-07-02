@@ -1,5 +1,8 @@
 "use client";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 import {
   PieChart,
   Pie,
@@ -22,6 +25,145 @@ interface DashboardProps {
 export default function ProcurementDashboard({
   reportData,
 }: DashboardProps) {
+
+  const downloadPDF = () => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Shopstream Procurement Report", 14, 20);
+
+  doc.setFontSize(12);
+
+  doc.text(
+    `Quote ID: ${reportData.quoteId}`,
+    14,
+    35
+  );
+
+  doc.text(
+    `Quote Name: ${reportData.quoteName}`,
+    14,
+    45
+  );
+
+  doc.text(
+    `Total Products: ${reportData.totalProducts}`,
+    14,
+    55
+  );
+
+  doc.text(
+    `Total Amount: $${reportData.totalAmount}`,
+    14,
+    65
+  );
+  
+  doc.text("Executive Summary", 14, 90);
+
+doc.text(
+  `Quantity Compliance: ${reportData.qtyMatchPercentage}%`,
+  14,
+  100
+);
+
+doc.text(
+  `Pricing Compliance: ${reportData.priceMatchPercentage}%`,
+  14,
+  110
+);
+
+doc.text(
+  `Missing Products: ${reportData.missingProductCount || 0}`,
+  14,
+  120
+);
+
+doc.text(
+  `Extra Products: ${reportData.extraProductCount || 0}`,
+  14,
+  130
+);
+doc.text(
+  `Recommendation: ${
+    reportData.qtyMatchPercentage >= 80
+      ? "Quote recommended for approval"
+      : "Quote requires review"
+  }`,
+  14,
+  140
+);
+
+doc.text(
+  reportData.qtyMatchPercentage >= 80
+    ? "This procurement quote satisfies most RFQ requirements and is recommended for approval."
+    : "This procurement quote requires further review before approval.",
+  14,
+  155,
+  { maxWidth: 180 }
+);
+doc.text("AI Procurement Insights", 14, 145);
+
+doc.text(
+  `• ${reportData.qtyMatchPercentage}% quantity compliance achieved`,
+  14,
+  155
+);
+
+doc.text(
+  `• ${reportData.priceMatchPercentage}% pricing compliance achieved`,
+  14,
+  165
+);
+
+doc.text(
+  reportData.qtyMatchPercentage >= 80
+    ? "This procurement quote satisfies most RFQ requirements..."
+    : "This procurement quote requires further review...",
+  14,
+  155,
+  { maxWidth: 180 }
+);
+
+  autoTable(doc, {
+    startY: 220,
+    head: [["Metric", "Value"]],
+    body: [
+      ["Qty Match %", reportData.qtyMatchPercentage],
+      ["Price Match %", reportData.priceMatchPercentage],
+      ["Missing Products", reportData.missingProductCount || 0],
+      ["Extra Products", reportData.extraProductCount || 0],
+      [
+        "Wrong Specs",
+        reportData.products?.filter(
+          (p: any) =>
+            p.specStatus === "Wrong Specification"
+        ).length,
+      ],
+    ],
+  });
+
+  autoTable(doc, {
+    startY: 190,
+    head: [
+      [
+        "Product",
+        "Qty Status",
+        "Recommendation",
+      ],
+    ],
+    body: reportData.products.map(
+      (item: any) => [
+        item.productName,
+        item.remarks,
+        item.recommendation,
+      ]
+    ),
+  });
+  
+  doc.save(
+    `Procurement_Report_${reportData.quoteNumber}.pdf`
+  );
+};
 
   if (!reportData) {
     return (
@@ -48,9 +190,20 @@ export default function ProcurementDashboard({
   return (
     <div className="space-y-8 mb-10">
 
-      <h2 className="text-3xl font-bold">
-        Procurement Dashboard
-      </h2>
+     <div className="flex justify-between items-center">
+
+       <h2 className="text-3xl font-bold">
+         Procurement Dashboard
+       </h2>
+
+       <button
+         onClick={downloadPDF}
+         className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white"
+        >
+        Download PDF
+      </button>
+
+    </div>
 
       {/* Summary Cards */}
 
