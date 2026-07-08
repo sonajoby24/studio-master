@@ -73,7 +73,7 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Welcome back!',
       });
-      router.push('/admin');
+      router.push('/');
     } catch (error: any) {
       toast({
         title: 'Login Failed',
@@ -93,7 +93,7 @@ export default function LoginPage() {
         title: 'Account Created',
         description: "You've successfully signed up!",
       });
-      router.push('/admin');
+      router.push('/');
     } catch (error: any) {
       toast({
         title: 'Sign-up Failed',
