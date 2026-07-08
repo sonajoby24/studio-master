@@ -13,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        router.push("/login");
+        router.replace("/login");
       } else {
         setLoading(false);
       }
@@ -23,11 +23,7 @@ export default function Home() {
   }, [router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
