@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 
+function normalize(value: string = "") {
+
+  return value
+    .replace(/Â/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+}
+
 export async function POST(req: Request) {
   try {
-    const { quoteId } = await req.json();
+    const { quoteId,quoteNumber } = await req.json();
 
     // -------------------------------
     // Find Quote
@@ -13,27 +23,77 @@ export async function POST(req: Request) {
       .collection("quotes")
       .get();
 
-    let quoteData: any = null;
+    let vendorQuote: any = null;
+    
+    console.log("INPUT QUOTE ID:", quoteId);
+    console.log("INPUT QUOTE NUMBER:", quoteNumber);
 
-    for (const doc of quoteSnapshot.docs) {
-      const data = doc.data();
+// Find the transactional/vendor quote
+for (const doc of quoteSnapshot.docs) {
 
-      const parentQuoteId =
-        data?.QuoteInfo?.[0]?.ParentQuoteID;
+  const data = doc.data();
 
-      const actualQuoteId =
-        data?.QuoteInfo?.[0]?.QuoteId;
+  const actualQuoteId =
+    data?.QuoteInfo?.[0]?.QuoteId;
 
-      if (
-        parentQuoteId === quoteId ||
-        actualQuoteId === quoteId
-      ) {
-        console.log("MATCH FOUND:", doc.id);
+  const actualQuoteNumber =
+    String(data?.QuoteInfo?.[0]?.QuoteNumber || "");
+  
+  console.log(
+  "Checking:",
+  actualQuoteId,
+  actualQuoteNumber,
+  doc.id
+);
 
-        quoteData = data;
-        break;
-      }
+  if (
+    actualQuoteId === quoteId ||
+    actualQuoteNumber === String(quoteNumber)
+  ) {
+
+    console.log("VENDOR QUOTE FOUND:", doc.id);
+
+    vendorQuote = data;
+
+    break;
+  }
+}
+const parentQuoteId =
+  vendorQuote.QuoteInfo?.[0]?.ParentQuoteID;
+
+const vendorType =
+  vendorQuote?.QuoteInfo?.[0]?.QuoteType;
+
+let quoteData: any = vendorQuote;
+
+console.log("QUOTE TYPE:", vendorType);
+
+if (parentQuoteId) {
+
+  for (const doc of quoteSnapshot.docs) {
+
+    const data = doc.data();
+
+    const actualQuoteId =
+      data?.QuoteInfo?.[0]?.QuoteId;
+
+    if (actualQuoteId === parentQuoteId) {
+
+      console.log("MASTER QUOTE FOUND:", doc.id);
+
+      quoteData = data;
+
+      break;
     }
+  }
+}
+
+if (!vendorQuote) {
+  return NextResponse.json({
+    success: false,
+    message: "Quote not found",
+  });
+}
 
     if (!quoteData) {
       return NextResponse.json({
@@ -41,130 +101,121 @@ export async function POST(req: Request) {
         message: "Quote not found",
       });
     }
+const masterInfo =
+  quoteData?.QuoteInfo?.[0];
 
-    const quoteInfo =
-      quoteData?.QuoteInfo?.[0];
+const vendorInfo =
+  vendorQuote?.QuoteInfo?.[0];
 
-    const lines =
-      quoteInfo?.Qlines || [];
+const masterLines =
+  masterInfo?.Qlines || [];
+
+const vendorLines =
+  vendorInfo?.Qlines || [];
+
+const missingProducts = masterLines.filter((master: any) => {
+
+  const found = vendorLines.find((vendor: any) =>
+
+    normalize(vendor.ProductName) === normalize(master.ProductName) &&
+    normalize(vendor.specValue) === normalize(master.specValue)
+
+  );
+
+  return !found;
+
+});
+
+const extraProducts = vendorLines.filter((vendor: any) => {
+
+  const found = masterLines.find((master: any) =>
+
+    normalize(master.ProductName) === normalize(vendor.ProductName) &&
+    normalize(master.specValue) === normalize(vendor.specValue)
+
+  );
+
+  return !found;
+
+});
+
+  console.log(
+  "MASTER:",
+  masterLines.length
+);
+
+console.log(
+  "VENDOR:",
+  vendorLines.length
+);
 
     console.log(
-      "QUOTE FOUND:",
+  "FIRST MASTER LINE:",
+  JSON.stringify(masterLines[0], null, 2)
+);
+
+console.log(
+  "MASTER LINE 18:",
+  JSON.stringify(masterLines[18], null, 2)
+);
+
+    console.log(
+      "MASTER INFO:",
       JSON.stringify(
-        quoteInfo,
+        masterInfo,
         null,
         2
       )
     );
 
-    // -------------------------------
-    // Load RFQ Data
-    // -------------------------------
-
-    const rfqSnapshot = await adminDb
-      .collection("RFQ")
-      .get();
-
-    const rfqItems: any[] = [];
-
-    rfqSnapshot.forEach((doc) => {
-      rfqItems.push(doc.data());
-    });
-
-    const missingProducts =
-      rfqItems.filter((rfq) => {
-
-    return !lines.some(
-      (line: any) => {
-
-        return (
-          line.ProductName === rfq.productName &&
-          (line.SpecValue || "") ===
-          (rfq.SpecValue || "")
-        );
-
-      }
-    );
-
-  });
-    
-    const extraProducts =
-  lines.filter((line: any) => {
-
-    return !rfqItems.some(
-      (rfq) => {
-
-        return (
-          rfq.productName ===
-          line.ProductName &&
-
-          (rfq.SpecValue || "") ===
-          (line.SpecValue || "")
-        );
-
-      }
-    );
-
-  });
+      
 
     // -------------------------------
     // Build Analysis Rows
     // -------------------------------
 
-    const analysisProducts: any[] = lines.map(
+    const analysisProducts: any[] = masterLines.map(
       (item: any) => {
-       const rfqMatch =
-        rfqItems.find((rfq: any) => {
-
-    const rfqProduct =
-      (rfq.productName || "")
-        .toLowerCase()
-        .trim();
-
-    const quoteProduct =
-      (item.ProductName || "")
-        .toLowerCase()
-        .trim();
+    const vendorMatch =
+  vendorLines.find((vendor: any) => {
 
     return (
-      rfqProduct === quoteProduct &&
-      (rfq.SpecValue || "")
-        .toLowerCase()
-        .trim() ===
-      (item.SpecValue || "")
-        .toLowerCase()
-        .trim()
+
+      normalize(vendor.ProductName) ===
+      normalize(item.ProductName)
+
+      &&
+
+      normalize(vendor.specValue) ===
+      normalize(item.specValue)
+
     );
 
   }) || null;
 
-const specMatched =
-  ((rfqMatch?.SpecValue || "")
-    .toLowerCase()
-    .trim()) ===
-  ((item.SpecValue || "")
-    .toLowerCase()
-    .trim());
+const specMatched = !!
+vendorMatch;
+ 
         const requestedQty =
           Number(
-            rfqMatch?.requestedQty ||
+            item.Quantity ||
               0
           );
 
         const addressedQty =
           Number(
-            item.Quantity || 0
+            vendorMatch?.Quantity || 0
           );
 
         const targetPrice =
           Number(
-            rfqMatch?.targetPrice ||
+            item.TargetPrice ||
               0
           );
 
         const vendorPrice =
           Number(
-            item.UnitPrice || 0
+            vendorMatch?.UnitPrice || 0
           );
 
         const priceDifference =
@@ -181,8 +232,21 @@ const specMatched =
           vendorPrice <=
           targetPrice;
 
-        let recommendation =
-          "Needs Review";
+let recommendation = "Not Recommended";
+
+if (vendorMatch) {
+
+    if (qtyMatched && priceMatched) {
+
+        recommendation = "Recommended";
+
+    } else if (qtyMatched) {
+
+        recommendation = "Qty Match";
+
+    }
+
+}
 
         if (
           qtyMatched &&
@@ -202,17 +266,21 @@ const specMatched =
 
        return {
          productName:
-           `${item.ProductName} (${item.SpecValue || "NA"})`,
+           `${item.ProductName} (${item.specValue || "NA"})`,
           
           specMatched,
 
-          specStatus:
-            specMatched
-              ? "Specification Match"
-              : "Wrong Specification",
+         specStatus:
+
+!vendorMatch
+  ? "Missing Product"
+  : specMatched
+      ? "Specification Match"
+      : "Wrong Specification",
 
           specValue:
-            item.SpecValue || "",
+            vendorMatch?.specValue || 
+            item.specValue || "",
 
           requestedQty,
 
@@ -225,11 +293,13 @@ const specMatched =
           priceDifference,
 
           recommendation,
+remarks:
 
-          remarks:
-            qtyMatched
-              ? "Qty Match"
-              : "Qty Mismatch",
+!vendorMatch
+  ? "Not Quoted"
+  : qtyMatched
+      ? "Qty Match"
+      : "Qty Mismatch",
         };
       }
     );
@@ -240,7 +310,7 @@ const specMatched =
 
     let totalAmount = 0;
 
-    lines.forEach((item: any) => {
+    vendorLines.forEach((item: any) => {
       totalAmount +=
         Number(
           item.UnitPrice || 0
@@ -326,27 +396,27 @@ const specMatched =
         recommendationSummary,
 
         parentQuoteId:
-          quoteInfo?.ParentQuoteID ||
+          vendorInfo?.ParentQuoteID ||
           "",
 
         quoteId:
-          quoteInfo?.QuoteId ||
+          vendorInfo?.QuoteId ||
           "",
 
         quoteName:
-          quoteInfo?.QuoteName ||
+          vendorInfo?.QuoteName ||
           "",
 
         quoteNumber:
-          quoteInfo?.QuoteNumber ||
+          vendorInfo?.QuoteNumber ||
           "",
 
         quoteType:
-          quoteInfo?.QuoteType ||
+          vendorInfo?.QuoteType ||
           "",
 
         totalProducts:
-          lines.length,
+          masterLines.length,
 
         totalAmount,
 
@@ -360,9 +430,14 @@ const specMatched =
         extraProductCount:
           extraProducts.length,
 
-        missingProducts,
-
-         extraProducts,
+missingProducts: missingProducts.map((p: any) => ({
+    productName: p.ProductName,
+    specValue: p.specValue
+})),
+extraProducts: extraProducts.map((p: any) => ({
+    productName: p.ProductName,
+    specValue: p.specValue
+})),
 
         insights,
 

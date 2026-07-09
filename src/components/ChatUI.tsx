@@ -53,6 +53,9 @@ export default function ChatUI() {
       const quoteMatch =
         input.match(/0Q0[a-zA-Z0-9]+/);
 
+      const quoteNumberMatch =
+        input.match(/\b\d{6,}\b/);
+
       const wantsReport =
         input
           .toLowerCase()
@@ -60,10 +63,18 @@ export default function ChatUI() {
 
       if (
         wantsReport &&
-        quoteMatch
+        (quoteMatch || quoteNumberMatch)
       ) {
         const quoteId =
-          quoteMatch[0];
+        quoteMatch ? quoteMatch [0] : "";
+
+const quoteNumberMatch =
+  input.match(/\b\d{6,}\b/);
+
+const quoteNumber =
+  quoteNumberMatch
+    ? quoteNumberMatch[0]
+    : "";
 
         const reportResponse =
           await fetch(
@@ -76,6 +87,7 @@ export default function ChatUI() {
               },
               body: JSON.stringify({
                 quoteId,
+                quoteNumber,
               }),
             }
           );
