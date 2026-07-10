@@ -1,6 +1,6 @@
 {
-  "name": "Shopstream",
-  "short_name": "Shopstream",
+  "name": "Catalogix",
+  "short_name": "Catalogix",
   "description": "Your one-stop shop for everything you need.",
   "start_url": "/",
   "display": "standalone",

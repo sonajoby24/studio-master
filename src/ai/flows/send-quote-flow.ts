@@ -66,7 +66,7 @@ const prompt = ai.definePrompt({
   name: 'sendQuotePrompt',
   input: { schema: promptInputSchema },
   output: { schema: QuoteOutputSchema },
-  prompt: `You are an expert sales assistant for an e-commerce store called Shopstream.
+  prompt: `You are an expert sales assistant for an e-commerce store called Catalogix.
   
   You are tasked with generating a professional and friendly email to a customer with their requested quote.
 
@@ -101,7 +101,7 @@ const prompt = ai.definePrompt({
   The final Grand Total for the quote is: ₹{{grandTotal}}
 
   Generate the content for the email.
-  - The subject line should be "Your Quote from Shopstream ({{{quoteId}}})".
+  - The subject line should be "Your Quote from Catalogix ({{{quoteId}}})".
   - The body should be a polite HTML message. Start by thanking the customer for their interest.
   - Present the items, additional costs, discount, GST, and grand total in a clear, easy-to-read format. A table would be ideal.
   - Clearly state the final grand total.

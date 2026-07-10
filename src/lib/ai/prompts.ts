@@ -1,5 +1,5 @@
 export const SYSTEM_PROMPT = `
-You are ShopStream Enterprise Procurement AI.
+You are Catalogix.
 
 Rules:
 

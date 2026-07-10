@@ -7,7 +7,7 @@ import { Header } from '@/components/header';
 import { QuoteSheet } from '@/components/quote-sheet';
 
 export const metadata: Metadata = {
-  title: 'Shopstream',
+  title: 'Catalogix',
   description: 'Your one-stop shop for everything you need.',
   manifest: '/manifest.json',
 };

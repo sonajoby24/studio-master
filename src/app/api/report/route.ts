@@ -339,29 +339,34 @@ remarks:
               100
           )
         : 0;
+// Only consider products that matched quantity
+const qtyMatchedProducts = analysisProducts.filter(
+  (p: any) =>
+    p.requestedQty === p.addressedQty
+);
 
-    const priceMatchedCount =
-      analysisProducts.filter(
-        (p: any) =>
-          p.vendorPrice <=
-          p.targetPrice
-      ).length;
+// From those products, check price
+const priceMatchedCount = qtyMatchedProducts.filter(
+  (p: any) =>
+    p.vendorPrice <= p.targetPrice
+).length;
 
-    const priceMatchPercentage =
-      analysisProducts.length > 0
-        ? Math.round(
-            (priceMatchedCount /
-              analysisProducts.length) *
-              100
-          )
-        : 0;
+// Pricing compliance is calculated only among quantity matched products
+const overallPriceMatchPercentage =
+  analysisProducts.length > 0
+    ? Math.round(
+        (priceMatchedCount /
+          analysisProducts.length) *
+          100
+      )
+    : 0;
 
-    const insights = [
-      `${qtyMatchedCount} of ${analysisProducts.length} products matched requested quantity.`,
-      `${priceMatchedCount} of ${analysisProducts.length} products met target pricing.`,
-      `Overall quantity compliance: ${qtyMatchPercentage}%`,
-      `Overall pricing compliance: ${priceMatchPercentage}%`,
-    ];
+const insights = [
+  `${qtyMatchedCount} of ${analysisProducts.length} products matched requested quantity.`,
+  `${priceMatchedCount} of ${qtyMatchedCount} quantity matched products met target pricing.`,
+  `Overall quantity compliance: ${qtyMatchPercentage}%`,
+  `Overall pricing compliance: ${overallPriceMatchPercentage}%`,
+];
 
     let recommendationSummary =
       "";
@@ -369,7 +374,7 @@ remarks:
     if (
       qtyMatchPercentage ===
         100 &&
-      priceMatchPercentage ===
+      overallPriceMatchPercentage ===
         100
     ) {
       recommendationSummary =
@@ -377,7 +382,7 @@ remarks:
     } else if (
       qtyMatchPercentage >=
         80 &&
-      priceMatchPercentage >=
+      overallPriceMatchPercentage >=
         80
     ) {
       recommendationSummary =
@@ -422,7 +427,7 @@ remarks:
 
          qtyMatchPercentage,
 
-        priceMatchPercentage,
+        overallPriceMatchPercentage,
 
          missingProductCount:
            missingProducts.length,

@@ -7,7 +7,6 @@ import * as z from 'zod';
 import { auth } from '@/lib/firebase';
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
@@ -37,10 +36,10 @@ const emailFormSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-const signupFormSchema = z.object({
+/*const signupFormSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-});
+}); */
 
 export default function LoginPage() {
   const router = useRouter();
@@ -56,15 +55,15 @@ export default function LoginPage() {
     },
   });
 
-  const signupForm = useForm<z.infer<typeof signupFormSchema>>({
+ /* const signupForm = useForm<z.infer<typeof signupFormSchema>>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
       email: '',
       password: '',
     },
-  });
+  }); */
 
-  async function onEmailSubmit(values: z.infer<typeof emailFormSchema>) {
+   async function onEmailSubmit(values: z.infer<typeof emailFormSchema>) {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -85,7 +84,7 @@ export default function LoginPage() {
     }
   }
 
-  async function onSignupSubmit(values: z.infer<typeof signupFormSchema>) {
+  /*async function onSignupSubmit(values: z.infer<typeof signupFormSchema>) {
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -103,17 +102,17 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  } */
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            Welcome to Shopstream
+            Welcome to Catalogix
           </CardTitle>
           <CardDescription>
-            Login or create an account
+            Login to continue
           </CardDescription>
         </CardHeader>
 
@@ -161,7 +160,7 @@ export default function LoginPage() {
           </Form>
 
           {/* SIGNUP */}
-          <Form {...signupForm}>
+        {/* <Form {...signupForm}>
             <form
               onSubmit={signupForm.handleSubmit(onSignupSubmit)}
               className="space-y-4"
@@ -196,7 +195,7 @@ export default function LoginPage() {
                 Create Account
               </Button>
             </form>
-          </Form>
+          </Form> */}
 
         </CardContent>
       </Card>

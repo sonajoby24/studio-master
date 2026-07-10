@@ -78,7 +78,7 @@ export default function AgentPage() {
       <div className="border-b border-zinc-800 p-6">
 
         <h1 className="text-3xl font-bold">
-          ShopStream AI Procurement Assistant
+          Catalogix
         </h1>
 
         <p className="text-zinc-400 mt-2">
@@ -174,7 +174,7 @@ export default function AgentPage() {
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask ShopStream AI..."
+            placeholder="Ask Catalogix AI..."
             className="flex-1 bg-zinc-900 rounded-2xl p-4 outline-none"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {

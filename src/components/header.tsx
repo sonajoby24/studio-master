@@ -43,7 +43,7 @@ export function Header() {
               className="flex items-center gap-2 text-2xl font-bold text-primary"
             >
               <Store className="h-8 w-8" />
-              <span>Shopstream</span>
+              <span>Catalogix</span>
             </Link>
           </div>
 

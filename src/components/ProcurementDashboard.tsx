@@ -3,21 +3,21 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import {
+/*import {
   PieChart,
   Pie,
   Cell,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
+} from "recharts";*/
 
-const COLORS = [
+/*const COLORS = [
   "#22c55e",
   "#3b82f6",
   "#f59e0b",
   "#ef4444",
 ];
-
+*/
 interface DashboardProps {
   reportData: any;
 }
@@ -30,7 +30,7 @@ export default function ProcurementDashboard({
   const doc = new jsPDF();
 
   doc.setFontSize(18);
-  doc.text("Shopstream Procurement Report", 14, 20);
+  doc.text("Catalogix Procurement Report", 14, 20);
 
   doc.setFontSize(12);
 
@@ -179,13 +179,13 @@ doc.text(
     );
   }
 
-  const chartData =
+  /*const chartData =
     reportData.products.map(
       (item: any) => ({
         name: item.productName,
         value: item.addressedQty,
       })
-    );
+    ); */
 
   return (
     <div className="space-y-8 mb-10">
@@ -265,7 +265,7 @@ doc.text(
       </div>
 
       {/* Product Distribution */}
-
+{/*
       <div className="bg-slate-900 p-6 rounded-xl">
 
         <h3 className="text-xl font-bold mb-4">
@@ -317,7 +317,8 @@ doc.text(
 
         </div>
 
-      </div>
+      </div> 
+      */}
 
       {/* Procurement Analysis */}
 

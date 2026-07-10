@@ -12,8 +12,27 @@ interface Message {
 }
 
 export default function ChatUI() {
-  const [messages, setMessages] =
-    useState<Message[]>([]);
+ const [messages, setMessages] = useState<Message[]>([
+  {
+    role: "assistant",
+    content: `
+# 👋 Welcome to Catalogix!
+
+I'm your **AI Procurement Assistant**.
+
+I can help you with:
+
+- Search Products
+- Compare Vendors
+- Generate Procurement Reports
+- View Product Specifications
+- Analyze Quotes
+- Retrieve information from the Catalogix database
+
+**How can I help you today?**
+`,
+  },
+]);
 
   const [input, setInput] =
     useState("");
@@ -205,7 +224,7 @@ Dashboard Updated Successfully.
               className={`${
                 msg.role ===
                 "user"
-                  ? "bg-blue-600 ml-auto max-w-5xl p-4 rounded-xl"
+                  ? "bg-[#C3D69B] text-black ml-auto max-w-5xl p-4 rounded-xl"
                   : "bg-zinc-900 p-4 rounded-xl"
               }`}
             >
@@ -254,7 +273,7 @@ Dashboard Updated Successfully.
               sendMessage();
             }
           }}
-          placeholder="Ask procurement questions..."
+          placeholder="Ask Catalogix..."
           className="flex-1 bg-zinc-900 p-3 rounded-xl outline-none"
         />
 
@@ -265,7 +284,7 @@ Dashboard Updated Successfully.
           disabled={
             loading
           }
-          className="bg-blue-600 px-5 rounded-xl"
+          className="bg-[#C3D69B] text-black px-5 rounded-xl hover:opacity-90"
         >
           {loading
             ? "Thinking..."

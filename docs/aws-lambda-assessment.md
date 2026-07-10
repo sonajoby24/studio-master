@@ -1,4 +1,4 @@
-ShopStream AWS Lambda Deployment Assessment
+Catalogix AWS Lambda Deployment Assessment
 
 Current Architecture
 

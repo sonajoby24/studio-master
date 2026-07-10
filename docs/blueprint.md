@@ -1,4 +1,4 @@
-# **App Name**: Shopstream
+# **App Name**: Catalogix
 
 ## Core Features:
 

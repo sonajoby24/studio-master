@@ -39,7 +39,7 @@ const prompt = ai.definePrompt({
   name: 'orderConfirmationPrompt',
   input: { schema: OrderConfirmationInputSchema },
   output: { schema: OrderConfirmationOutputSchema },
-  prompt: `You are an expert in customer communication for an e-commerce store called Shopstream.
+  prompt: `You are an expert in customer communication for an e-commerce store called Catalogix.
   
   A customer named {{{customerName}}} has just had their order confirmed. The order ID is {{{orderId}}}.
   The total amount was ₹{{total}}.
@@ -51,8 +51,8 @@ const prompt = ai.definePrompt({
 
   Generate a friendly and professional confirmation message for the customer. Create content for both an email and an SMS.
 
-  - For the email, the subject line should be "Your Shopstream Order #{{{orderId}}} is Confirmed!". The body should be a friendly HTML message that thanks the customer, confirms the order details, and lets them know that their items will be shipped soon.
-  - For the SMS, create a short, concise text message. It should confirm the order and mention the order ID. For example: "Hi {{{customerName}}}, your Shopstream order #{{{orderId}}} is confirmed! We'll notify you when it ships. Thank you for your purchase."
+  - For the email, the subject line should be "Your Catalogix Order #{{{orderId}}} is Confirmed!". The body should be a friendly HTML message that thanks the customer, confirms the order details, and lets them know that their items will be shipped soon.
+  - For the SMS, create a short, concise text message. It should confirm the order and mention the order ID. For example: "Hi {{{customerName}}}, your Catalogix order #{{{orderId}}} is confirmed! We'll notify you when it ships. Thank you for your purchase."
   
   Keep the tone positive and reassuring for both.
   `,
