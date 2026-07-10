@@ -72,19 +72,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const productsCollectionRef = collection(db, 'products');
 
   const seedDatabase = useCallback(async () => {
-    const batch = writeBatch(db);
-    initialProducts.forEach((product) => {
-      const docRef = doc(db, "products", product.productId);
-      const productWithDates: Record<string, any> = { ...product, qtyForQuote: 0 };
-      Object.keys(productWithDates).forEach(key => {
-        if (key === 'startDate' || key === 'lastUpdatedDate') {
-          productWithDates[key] = productWithDates[key] ? Timestamp.fromDate(new Date(productWithDates[key])) : null;
-        }
-      });
-      batch.set(docRef, productWithDates);
-    });
-    await batch.commit();
-  }, []);
+  return;
+}, []);
 
   // Hydrate state from localStorage on the client side
   useEffect(() => {
@@ -104,11 +93,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkAndSeed = async () => {
-      const snapshot = await getDocs(productsCollectionRef);
-      if (snapshot.empty && initialProducts.length > 0) {
-        await seedDatabase();
-      }
-    };
+  return;
+};
     
     checkAndSeed();
 
